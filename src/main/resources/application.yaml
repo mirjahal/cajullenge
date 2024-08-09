@@ -1,0 +1,37 @@
+micronaut:
+  application:
+    name: cajullenge
+
+datasources:
+  default:
+    password: postgres
+    db-type: postgres
+    dialect: POSTGRES
+    url: jdbc:postgresql://localhost:5432/cajullenge
+    username: postgres
+    driver-class-name: org.postgresql.Driver
+
+jpa:
+  default:
+    packages-to-scan:
+      - 'br.com.caju.domain'
+    properties:
+      hibernate:
+        hbm2ddl:
+          auto: none
+        show_sql: true
+
+flyway:
+  datasources:
+    default:
+      enabled: false
+
+cajullenge:
+  fallback-category: CASH
+  categories:
+    FOOD:
+      - "eats"
+      - "food"
+    MEAL:
+      - "restaurant"
+      - "meal"
