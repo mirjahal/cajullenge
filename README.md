@@ -1,6 +1,8 @@
 ## Cajullenge
 
-#### L4. Questão aberta
+### L4. Questão aberta
+
+#### O problema
 
 O cenário descrito demonstra um desafio recorrente na implementação de sistemas distribuídos com o uso de banco de dados
 que é o anti-pattern ***read-process-write***.
@@ -16,14 +18,16 @@ A sequência abaixo ilustra isso:
 | UPDATE category_balance SET balance = 300 WHERE account_id = 1 AND category_id = 'FOOD';          |                                                                                                   |
 |                                                                                                   |     UPDATE category_balance SET balance = 300 WHERE account_id = 1 AND category_id = 'FOOD';      |
 
-Ao término das duas transações o saldo estará com o valor incosistente de 300 quando o correto seria 100, 
+Ao término das duas transações o saldo estará com o valor inconsistente de 300 quando o correto seria 100, 
 pois o saldo inicial era 500 e ocorreram dois débitos no valor de 200.
+
+#### Proposta de solução
 
 Como o banco de dados escolhido para a implementação do desafio foi o PostgreSQL, 
 para evitarmos esse tipo de problema podemos lançar mão do ***Row-Level Locks*** 
-que uma estratégia de ***pessimistic locking***.
+que é uma estratégia de ***pessimistic locking***.
 Conseguimos isso usando o modo ***FOR UPDATE***. 
-Na prática fazemos uma alteração na query de SELECT adicionando ao final o FOR UPDATE
+Na prática, fazemos uma alteração na query de SELECT adicionando ao final o FOR UPDATE
 
 Com o uso do ***FOR UPDATE*** conseguimos com que as linhas recuperadas pela query de SELECT 
 sejam bloqueadas até que seja confirmada uma atualização. 
@@ -44,17 +48,26 @@ A sequência abaixo ilustra o comportamento quando usamos o FOR UPDATE:
 |                                                                                                              |    UPDATE category_balance SET balance = 100 WHERE account_id = 1 AND category_id = 'FOOD';     |
 |                                                                                                              |                                             COMMIT;                                             |
 
-#### Para rodar na sua máquina os requisitos são:
+Com essa proposta:
+
+1. Garantimos que apenas uma transação por conta seja processada em um determinado momento 
+2. Permaneceríamos ainda com o procesamento em modo síncrono
+3. O processamento ocorreria em menos de 100 ms. Supondo que um processamento dure 20ms, 
+o segundo processamento aguardaria esse tempo de 20ms do primeiro mais os seus 20ms de processamento, 
+que dá um total de 40ms e permaneceríamos abaixo do tempo de timeout que é de 100ms. 
+Um processamento com a implementação atual do desafio ocorre em menos de 20ms.
+
+### Para rodar na sua máquina os requisitos são:
 
 * Java 21
 * Docker
 
-#### Base de dados
+### Base de dados
 
 Existe um arquivo docker-compose.yaml que quando executado provisiona uma base de dados e executa uma migration 
 via flyway construíndo tabelas e inserindo dados iniciais.
 
-#### Testes
+### Testes
 
 Foram implementados testes unitários e testes E2E. Durante a execução dos testes E2E é provisionada uma base de dados 
 via testcontainers. São inseridos alguns dados específicos para os testes e esses são inseridos via migration flyway. 
